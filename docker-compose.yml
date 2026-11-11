@@ -1,0 +1,74 @@
+services:
+  backend-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      target: dev
+    ports:
+      - "8000:8000"
+      - "5678:5678"
+    volumes:
+      - ./src:/app/src
+      - ./data:/data
+      - ./tests:/app/tests
+    environment:
+      - WORKDIR=/data
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    profiles: ["dev"]
+
+  backend-test:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      target: test
+    volumes:
+      - ./src:/app/src
+      - ./data:/data
+      - ./tests:/app/tests
+    environment:
+      - WORKDIR=/data
+    profiles: ["test"]
+
+  backend-prod:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+      target: prod
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      - WORKDIR=/data
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    profiles: ["prod"]
+
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      target: dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    profiles: ["dev"]
+    depends_on:
+      - backend-dev
+
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      target: prod
+    ports:
+      - "8080:80"
+    profiles: ["prod"]
+    depends_on:
+      - backend-prod
+
+volumes:
+  frontend_node_modules:
